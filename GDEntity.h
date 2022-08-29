@@ -18,11 +18,13 @@ protected:
 public:
 	flecs::world* ecs;
 	bool valid;
-	flecs::entity e;
+	flecs::entity entity;
 	GDEntity();
 	~GDEntity();
 
 	void Set(Ref<GDComponent> gdComp, Dictionary values);
+	void Remove(Ref<GDComponent> gdComp);
+	Dictionary Get(Ref<GDComponent> gdComp);
 	int GetID() const;
 	String GetTypeID() const;
 };

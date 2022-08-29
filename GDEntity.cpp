@@ -10,6 +10,8 @@ void GDEntity::_bind_methods() {
     ClassDB::bind_method(D_METHOD("Set", "gd_comp_def"), &GDEntity::Set);
     ClassDB::bind_method(D_METHOD("GetID"), &GDEntity::GetID);
     ClassDB::bind_method(D_METHOD("GetTypeID"), &GDEntity::GetTypeID);
+    ClassDB::bind_method(D_METHOD("Remove", "component"), &GDEntity::Remove);
+    ClassDB::bind_method(D_METHOD("Get", "component"), &GDEntity::Get);
 }
 
 GDEntity::GDEntity() {
@@ -18,7 +20,7 @@ GDEntity::GDEntity() {
 
 GDEntity::~GDEntity()
 {
-	
+    entity.destruct();
 }
 
 void GDEntity::Set(Ref<GDComponent> gdComp, Dictionary values)
@@ -29,30 +31,48 @@ void GDEntity::Set(Ref<GDComponent> gdComp, Dictionary values)
         return;
     }
 
+    auto tag = gdComp->gd_comp;
+    if (entity.has(tag))
+    {
+        return;
+    }
+
     // just tag the entity, pair stuff is a deadend
-    e.add(gdComp->gd_comp);
+    entity.add(tag);
     
     // update the databag with the values
-    auto se = e.get_mut<ScriptEntity>();
-    se->data_bag[gdComp->gd_comp.id()] = values;
+    auto se = entity.get_mut<ScriptEntity>();
+    se->data_bag[tag.id()] = values;
+}
 
-    //std::cout << "FLECS: adding scriptable tag " << gdComp->gd_comp.id() << " to " << e.id() << std::endl;
+void GDEntity::Remove(Ref<GDComponent> gdComp)
+{
+    auto tag = gdComp->gd_comp;
+    if(entity.has(tag))
+    {
+        entity.remove(tag);
+        auto data_bag = entity.get_mut<ScriptEntity>();
+        data_bag->data_bag.erase(tag.id());
+    }
+}
 
-    // auto data = ecs->entity().set<ScriptableData>({values});
-    // std::cout << "FLECS: created data bag entity, id " << data.id() << std::endl;
-
-    // auto pair = ecs->pair(gdComp->gd_comp, data);
-    // std::cout << "FLECS: created pair id" << pair << std::endl;
-
-    // e.add(pair);
+Dictionary GDEntity::Get(Ref<GDComponent> gdComp)
+{
+    auto tag = gdComp->gd_comp;
+    if(entity.has(tag))
+    {
+        entity.remove(tag);
+        auto data_bag = entity.get<ScriptEntity>();
+        return data_bag->data_bag.get(tag.id(), Dictionary());
+    }
 }
 
 int GDEntity::GetID() const
 {
-    return e.id();
+    return entity.id();
 }
 
 String GDEntity::GetTypeID() const
 {
-    return e.type_id().str().c_str();
+    return entity.type_id().str().c_str();
 }

@@ -25,7 +25,7 @@ ECSWorld::ECSWorld()
 
 ECSWorld::~ECSWorld()
 {
-	
+	// I think the world explodes if the world disposes before GDEntity's do.
 }
 
 void ECSWorld::Tick()
@@ -40,7 +40,7 @@ Ref<GDEntity> ECSWorld::Entity()
 	ref->ecs = &world;
 	
 	auto e = world.entity().set<ScriptEntity>({ref});	
-	ref->e = e;
+	ref->entity = e;
 
 	ref->valid = true;
 	return ref;
