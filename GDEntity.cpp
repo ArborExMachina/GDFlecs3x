@@ -23,7 +23,8 @@ GDEntity::~GDEntity()
     entity.destruct();
 }
 
-void GDEntity::Set(Ref<GDComponent> gdComp, Dictionary values)
+// TODO: rename this. set() is a builtin
+void GDEntity::Set(Ref<GDComponent> gdComp, Variant values)
 {
     if (!valid)
     {
