@@ -8,8 +8,7 @@
 struct ScriptEntity
 {
     public:
-    Ref<GDEntity> ent;
-    Dictionary data_bag;
+    GDEntity* ent;
 };
 
 #endif 

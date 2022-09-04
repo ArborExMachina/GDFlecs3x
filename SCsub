@@ -8,7 +8,8 @@ Import('env')
 sources = [
     "flecs/flecs.c"
 ]
-sources.extend(glob("**.cpp"))
+sources.extend(glob("**/*.cpp", recursive=True))
+print(sources)
 
 module_env = env.Clone()
 module_env.Append(CCFLAGS=['-O2'])
@@ -17,7 +18,7 @@ if ARGUMENTS.get('ecs_shared', 'no') == 'yes':
     # Shared lib compilation
     module_env.Append(CCFLAGS=['-fPIC'])
     module_env['LIBS'] = []
-    shared_lib = module_env.SharedLibrary(target='#bin/summator', source=sources)
+    shared_lib = module_env.SharedLibrary(target='#bin/ecs', source=sources)
     shared_lib_shim = shared_lib[0].name.rsplit('.', 1)[0]
     env.Append(LIBS=[shared_lib_shim])
     env.Append(LIBPATH=['#bin'])

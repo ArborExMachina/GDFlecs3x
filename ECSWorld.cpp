@@ -1,48 +1,98 @@
 #include <iostream>
 
+#include "core/engine.h"
+
 #include "ECSWorld.h"
 #include "GDEntity.h"
 #include "GDComponent.h"
-#include "Components/ScriptableData.h"
+#include "Systems/GDSystem.h"
 #include "Components/ScriptEntity.h"
 
 
 const auto ENTITY = "entity";
 
 void ECSWorld::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("Tick"), &ECSWorld::Tick);
-	ClassDB::bind_method(D_METHOD("Entity"), &ECSWorld::Entity);
-	ClassDB::bind_method(D_METHOD("CreateComponent", "name"), &ECSWorld::CreateComponent);
-	ClassDB::bind_method(D_METHOD("Query", "query"), &ECSWorld::Query);
+	//ClassDB::bind_method(D_METHOD("tick", "delta"), &ECSWorld::Tick);
+	ClassDB::bind_method(D_METHOD("entity"), &ECSWorld::Entity);
+	ClassDB::bind_method(D_METHOD("create_component_type", "name"), &ECSWorld::CreateComponent);
+	ClassDB::bind_method(D_METHOD("filter", "filter_statement"), &ECSWorld::Filter);
+	ClassDB::bind_method(D_METHOD("get_entity_count"), &ECSWorld::GetEntityCount);
 }
 
 ECSWorld::ECSWorld()
 {
-	_delta = 0;
 	world.component<ScriptEntity>();
-	world.component<ScriptableData>();
 }
 
 ECSWorld::~ECSWorld()
 {
-	// I think the world explodes if the world disposes before GDEntity's do.
+
 }
 
-void ECSWorld::Tick()
+void ECSWorld::_notification(int p_notification)
 {
-	world.progress();
+	Node::_notification(p_notification);
+
+	if (Engine::get_singleton()->is_editor_hint())
+	{
+		return;
+	}
+
+	switch (p_notification) {
+		case NOTIFICATION_PROCESS: {
+				Tick(get_process_delta_time());
+		} break;
+		case NOTIFICATION_READY: {
+			int child_count = get_child_count();
+			for (int i = 0; i < child_count; i++)
+			{
+				GDSystem *gd_system = static_cast<GDSystem*>(get_child(i));
+				gd_system->InitSystem(this);
+			}
+			set_process(true);
+		} break;
+		case NOTIFICATION_PREDELETE: {
+			world.defer_begin();
+			world.filter<ScriptEntity>()
+				.each([](flecs::entity e, ScriptEntity& se){
+					//std::cout << "finalizing entity " << e.id() << std::endl;
+					se.ent->call("free");
+				});
+			world.defer_end();
+		} break;
+	}
 }
 
-Ref<GDEntity> ECSWorld::Entity()
+void ECSWorld::Tick(float delta)
 {
-	Ref<GDEntity> ref;
-	ref.instance();
+	//world.progress();
+	int child_count = get_child_count();
+	for (int i = 0; i < child_count; i++)
+	{
+		GDSystem *gd_system = static_cast<GDSystem*>(get_child(i));
+		gd_system->Tick(delta);
+	}
+}
+
+GDEntity* ECSWorld::Entity()
+{
+
+	GDEntity* ref = memnew(GDEntity);
 	ref->ecs = &world;
 	
-	auto e = world.entity().set<ScriptEntity>({ref});	
+	// bool defered = world.is_deferred();
+	// if (!defered)
+	// 	world.defer_begin();
+	auto e = world.entity().set<ScriptEntity>({});
+	e.get_mut<ScriptEntity>()->ent = ref;
 	ref->entity = e;
-
 	ref->valid = true;
+
+	//std::cout << "created entity " << e.id() << std::endl;
+	//std::cout << "created entity " << e.get<ScriptEntity>()->ent->entity.id() << std::endl;
+	// if (!defered)
+	// 	world.defer_end();
+
 	return ref;
 }
 
@@ -59,15 +109,15 @@ Ref<GDComponent> ECSWorld::CreateComponent(const String& name)
 	return ref;
 }
 
-Array ECSWorld::Query(const String& query)
+Array ECSWorld::Filter(const String& dsl)
 {
-	std::wstring ws = query.c_str();
+	std::wstring ws = dsl.c_str();
 	std::string s(ws.begin(), ws.end());
 	
-	flecs::query<ScriptEntity> f = world.query_builder<ScriptEntity>()
+	flecs::filter<ScriptEntity> f = world.filter_builder<ScriptEntity>()
 		.expr(s.c_str())
 		.build();
-	std::cout << "FLECS: ForEach query result: " << f.iter().to_json().c_str() << std::endl << std::endl;
+	//std::cout << "FLECS: ForEach query result: " << f.iter().to_json().c_str() << std::endl << std::endl;
 
 	Array ret = Array();
 
@@ -78,17 +128,33 @@ Array ECSWorld::Query(const String& query)
 		ent_data["comps"] = comps;
 
 		int ent_id = it.id(1);
-		int field_count = it.field_count() + 1; // why +1? I don't know. Found it experimentally. Lord help me.
+		int field_count = it.field_count() + 1;
 		//std::cout << it.entity(1) << ":" << std::endl;
 		for (int i = 2; i < field_count; i++)
 		{
 			//std::cout << "\t" << it.id(i) << " " << it.src(i) << std::endl;
 			auto comp = it.id(i);
-			comps[comp.name().c_str()] = script_ent.data_bag[comp.id()];
+			comps[comp.name().c_str()] = script_ent.ent->dataBag[comp.id()];
 		}		
 
 		ret.append(ent_data);
 	});
 
 	return ret;
+}
+
+flecs::query<ScriptEntity> ECSWorld::BuildSystemQuery(const String& query) const
+{
+	std::wstring ws = query.c_str();
+	std::string s(ws.begin(), ws.end());
+	
+	auto q = world.query_builder<ScriptEntity>()
+		.expr(s.c_str())
+		.build();
+	return q;
+}
+
+int ECSWorld::GetEntityCount() const
+{
+	return world.count<ScriptEntity>();
 }

@@ -3,18 +3,28 @@
 
 #include "scene/main/node.h"
 #include "../flecs/flecs.h"
-#include "../ECSWorld.h"
+
+class ECSWorld;
+struct ScriptEntity;
 
 class GDSystem : public Node {
-    //GDCLASS(GDSystem, Node);
-    
-   /* protected:
-        static void _bind_methods();*/
+    GDCLASS(GDSystem, Node);
+
+    private:
+        String filterDsl;
+
+    protected:
+        static void _bind_methods();
+        flecs::query<ScriptEntity> q;
         
     public:
+        flecs::world* ecs;
         GDSystem();
         ~GDSystem();
-		virtual void Register(ECSWorld& world) = 0;
+        void InitSystem(ECSWorld* world);
+        void Tick(float delta);
+        void SetFilter(const String& dsl);
+        String GetFilter() const;
 };
 
 #endif

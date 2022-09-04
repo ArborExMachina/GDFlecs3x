@@ -6,6 +6,7 @@
 #include "ECSWorld.h"
 #include "GDEntity.h"
 #include "GDComponent.h"
+#include "Systems/GDSystem.h"
 
 #include "flecs/flecs.h"
 
@@ -13,6 +14,7 @@ void register_ecs_types() {
     ClassDB::register_class<GDEntity>();
     ClassDB::register_class<GDComponent>();
     ClassDB::register_class<ECSWorld>();
+    ClassDB::register_class<GDSystem>();
 
     //ecs_log_set_level(3);
 }

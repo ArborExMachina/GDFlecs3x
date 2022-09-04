@@ -1,32 +1,24 @@
 extends ECSWorld
 
+onready var c := create_component_type("TestComp")
 
-func _ready() -> void:
-	var c := CreateComponent("test_comp")
-	var c1 := CreateComponent("more_test")
-	print("created new comp type called %s with id %s" % [c.GetTypeName(), c.GetID()])
-	print("created new comp type called %s with id %s" % [c1.GetTypeName(), c1.GetID()])
-	
-	var e := _make_entity([[c, {"test":1}], [c1, {"test1":2}]])
-	var e1 := _make_entity([[c, {"test":3}], [c1, {"test1":4}]])
-
-	var results := Query("test_comp, more_test");
-	print(results)
-	for r in results:
-		r.comps.test_comp.test += 1
-		r.comps.more_test.test1 += 10
-	print(results)
-
-	print(Query("test_comp, more_test"))
+#func _ready() -> void:
+#	$TestSystem.init_system(self, "TestComp")
 
 
-func _make_entity(comps:Array) -> GDEntity:
-	var e := Entity()
-	#print("created new entity id %s, type %s" % [e.GetID(), e.GetTypeID()])
+func make_entity():
+	var e := entity()
+	var comp_data = TestComp.new()
+	comp_data.x = randf() * 1
+	e.set_comp(c, comp_data)
 
-	for c in comps:
-		var comp = c[0]
-		var vals = c[1]
-		#print("added %s to entity %s" % [c.GetID(), e.GetID()])
-		e.Set(comp, vals)
+	print("created entity %s" % e.get_id())
 	return e
+#
+#func _notification(what):
+#	if what == MainLoop.NOTIFICATION_WM_QUIT_REQUEST:
+#		print(get_entity_count())
+#		var ents = filter("")
+#		for e in ents:
+#			e.entity.free()
+#		print(get_entity_count())

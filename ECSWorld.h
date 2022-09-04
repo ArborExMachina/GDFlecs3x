@@ -8,26 +8,29 @@
 
 class GDEntity;
 class GDComponent;
+struct ScriptEntity;
 
 class ECSWorld : public Node {
 	GDCLASS(ECSWorld, Node);
 
 private:
-	flecs::world world;
-	float _delta;
-
+	
 protected:
 	static void _bind_methods();
+	void _notification(int p_notification);
 
 public:
 	ECSWorld();
 	~ECSWorld();
 	
-	Ref<GDEntity> Entity();
+	flecs::world world;
+	GDEntity* Entity();
 	Ref<GDComponent> ECSWorld::CreateComponent(const String& name);
-	Array Query(const String& query);
+	Array Filter(const String& query);
+	void Tick(float delta);
 
-	void Tick();
+	flecs::query<ScriptEntity> BuildSystemQuery(const String& query) const;
+	int GetEntityCount() const;
 };
 
 #endif

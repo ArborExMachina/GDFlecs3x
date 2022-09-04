@@ -3,8 +3,8 @@
 #include "GDComponent.h"
 
 void GDComponent::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("GetTypeName"), &GDComponent::GetTypeName);
-    ClassDB::bind_method(D_METHOD("GetID"), &GDComponent::GetID);
+	ClassDB::bind_method(D_METHOD("get_type_name"), &GDComponent::GetTypeName);
+    ClassDB::bind_method(D_METHOD("get_ID"), &GDComponent::GetID);
 }
 
 GDComponent::GDComponent() {
