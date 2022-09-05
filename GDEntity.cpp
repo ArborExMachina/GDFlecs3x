@@ -72,14 +72,14 @@ void GDEntity::Remove(Ref<GDComponent> gdComp)
     }
 }
 
-Dictionary GDEntity::GetComp(Ref<GDComponent> gdComp)
+Variant GDEntity::GetComp(Ref<GDComponent> gdComp)
 {
     auto tag = gdComp->gd_comp;
     if(entity.has(tag))
     {
-        return dataBag.get(tag.id(), Dictionary());
+        return dataBag.get(tag.id(), Variant());
     }
-    return Dictionary();
+    return Variant();
 }
 
 int GDEntity::GetID() const

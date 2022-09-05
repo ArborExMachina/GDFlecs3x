@@ -26,7 +26,7 @@ public:
 
 	void SetComp(Ref<GDComponent> gdComp, Variant values);
 	void Remove(Ref<GDComponent> gdComp);
-	Dictionary GetComp(Ref<GDComponent> gdComp);
+	Variant GetComp(Ref<GDComponent> gdComp);
 	int GetID() const;
 	String GetTypeID() const;
 };
